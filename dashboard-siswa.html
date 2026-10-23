@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Siswa - Portal Informatika</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #f4f6f9;
+      color: #333;
+    }
+    header {
+      background-color: #27ae60;
+      color: #fff;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 20px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .btn-logout {
+      background-color: #e74c3c;
+      color: #fff;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+    }
+    .card h3 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+      border-bottom: 2px solid #ecf0f1;
+      padding-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+      font-size: 14px;
+    }
+    table th {
+      background-color: #f8f9fa;
+      color: #2c3e50;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+    .badge-nilai {
+      background-color: #e3f2fd;
+      color: #1565c0;
+      font-weight: bold;
+      padding: 6px 10px;
+      border-radius: 5px;
+    }
+    .btn-akses {
+      display: inline-block;
+      padding: 6px 12px;
+      background-color: #3498db;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .btn-akses:hover {
+      background-color: #2980b9;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Portal Belajar Siswa</h1>
+    <div class="user-info">
+      <span>Halo, <b id="namaSiswa">Siswa</b></span>
+      <button class="btn-logout" onclick="logout()">Keluar</button>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- SECTION 1: NILAI HASIL BELAJAR PRIBADI -->
+    <div class="card">
+      <h3>Rekapitulasi Nilai Saya</h3>
+      <table id="tabelNilai">
+        <thead>
+          <tr>
+            <th>Mata Pelajaran</th>
+            <th>Tugas (30%)</th>
+            <th>UTS (30%)</th>
+            <th>UAS (40%)</th>
+            <th>Nilai Akhir</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5" style="text-align: center;">Memuat data nilai...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECTION 2: MATERI & MEDIA PEMBELAJARAN INTERAKTIF -->
+    <div class="card">
+      <h3>Materi & Media Pembelajaran</h3>
+      <table id="tabelMateri">
+        <thead>
+          <tr>
+            <th>Kategori</th>
+            <th>Judul / Deskripsi Materi</th>
+            <th>Kelas</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4" style="text-align: center;">Memuat data materi...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    // =========================================================
+    // TEMPELKAN URL DEPLOY WEB APP APPS SCRIPT ANDA DI SINI
+    // =========================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbx9uKr1IKL4br0N_LeNbTpAiv4fUBok1XEdQwOf56KvGoXtdkgyO7abJRRJvjmU628X6A/exec";
+
+    // 1. PROTEKSI HALAMAN (CEK USER LOGIN)
+    const userData = JSON.parse(sessionStorage.getItem("userLoggedIn"));
+    if (!userData || userData.role.toLowerCase() !== "siswa") {
+      alert("Akses ditolak! Silakan login sebagai siswa.");
+      window.location.href = "index.html";
+    } else {
+      document.getElementById("namaSiswa").innerText = userData.nama_lengkap;
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = "index.html";
+    }
+
+    // 2. MEMUAT DATA NILAI PRIBADI SISWA
+    async function loadNilaiPribadi() {
+      const tbody = document.querySelector("#tabelNilai tbody");
+      try {
+        // Panggil API dengan parameter userId khusus siswa yang sedang login
+        const res = await fetch(`${API_URL}?sheet=Nilai&userId=${userData.id_user}`);
+        const result = await res.json();
+
+        if (result.status === "success" && result.data.length > 0) {
+          tbody.innerHTML = "";
+          result.data.forEach(item => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><b>${item.mata_pelajaran}</b></td>
+              <td>${item.nilai_tugas}</td>
+              <td>${item.nilai_uts}</td>
+              <td>${item.nilai_uas}</td>
+              <td><span class="badge-nilai">${item.nilai_akhir}</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Belum ada data nilai yang diinput oleh Guru.</td></tr>`;
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Gagal mengambil data nilai.</td></tr>`;
+      }
+    }
+
+    // 3. MEMUAT MATERI & MEDIA INTERAKTIF
+    async function loadMateri() {
+      const tbody = document.querySelector("#tabelMateri tbody");
+      try {
+        const res = await fetch(`${API_URL}?sheet=Kurikulum`);
+        const result = await res.json();
+
+        if (result.status === "success" && result.data.length > 0) {
+          tbody.innerHTML = "";
+          result.data.forEach(item => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><span class="badge">${item.kategori}</span></td>
+              <td>
+                <b>${item.judul}</b><br>
+                <small style="color: #666;">${item.keterangan || ''}</small>
+              </td>
+              <td>${item.kelas}</td>
+              <td>
+                <a href="${item.link_url}" target="_blank" class="btn-akses">Akses Materi</a>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Belum ada materi atau perangkat yang tersedia.</td></tr>`;
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: red;">Gagal mengambil data materi.</td></tr>`;
+      }
+    }
+
+    // Jalankan pemanggilan data saat halaman pertama kali dibuka
+    loadNilaiPribadi();
+    loadMateri();
+  </script>
+</body>
+</html>
